@@ -6,7 +6,7 @@ from oauth2client.contrib.django_util.models import CredentialsField
 from oauth2client.contrib import xsrfutil
 from .models import CredentialsModel
 from django.shortcuts import render
-
+from gmail.utils import get_credentials, get_authorization_url
 
 FLOW = flow_from_clientsecrets(
     settings.GOOGLE_OAUTH2_CLIENT_SECRETS_JSON,
@@ -14,7 +14,15 @@ FLOW = flow_from_clientsecrets(
     redirect_uri='http://127.0.0.1:8000/oauth2callback',
     prompt='consent')
 
+
 def gmail_authenticate(request):
+    redirect_url = get_authorization_url('neerajgupta.finance@gmail.com', 'BAD')
+    print('gmail_authenticate(): redirect_url={}'.format(redirect_url))
+    # return HttpResponseRedirect('https://dev.glassball.app')
+    return HttpResponseRedirect(redirect_url)
+
+
+def gmail_authenticate_old(request):
     storage = DjangoORMStorage(CredentialsModel, 'id', request.user, 'credential')
     credential = storage.get()
 

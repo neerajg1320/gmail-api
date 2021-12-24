@@ -18,7 +18,7 @@ from apiclient.discovery import build
 #       "token_uri": "https://accounts.google.com/o/oauth2/token"
 #     }
 #   }
-CLIENTSECRETS_LOCATION = 'credentials.json>'
+CLIENTSECRETS_LOCATION = 'credentials.json'
 REDIRECT_URI = 'https://dev.glassball.app/'
 SCOPES = [
     'https://www.googleapis.com/auth/gmail.readonly',
@@ -103,7 +103,7 @@ def exchange_code(authorization_code):
     try:
         credentials = flow.step2_exchange(authorization_code)
         return credentials
-    except FlowExchangeError, error:
+    except FlowExchangeError as error:
         logging.error('An error occurred: %s', error)
         raise CodeExchangeException(None)
 
@@ -123,7 +123,7 @@ def get_user_info(credentials):
     user_info = None
     try:
         user_info = user_info_service.userinfo().get().execute()
-    except errors.HttpError, e:
+    except errors.HttpError as e:
         logging.error('An error occurred: %s', e)
     if user_info and user_info.get('id'):
         return user_info
@@ -183,7 +183,7 @@ def get_credentials(authorization_code, state):
             credentials = get_stored_credentials(user_id)
             if credentials and credentials.refresh_token is not None:
                 return credentials
-    except CodeExchangeException, error:
+    except CodeExchangeException as error:
         logging.error('An error occurred during code exchange.')
         # Drive apps should try to retrieve the user and credentials for the current
         # session.
