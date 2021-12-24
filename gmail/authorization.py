@@ -131,7 +131,7 @@ def get_user_info(credentials):
         raise NoUserIdException()
 
 
-def get_authorization_url(email_address, state):
+def get_authorization_url(email_address, state, redirect_url=REDIRECT_URI):
     """Retrieve the authorization URL.
 
     Args:
@@ -143,9 +143,10 @@ def get_authorization_url(email_address, state):
     flow = flow_from_clientsecrets(CLIENTSECRETS_LOCATION, ' '.join(SCOPES))
     flow.params['access_type'] = 'offline'
     flow.params['approval_prompt'] = 'force'
-    flow.params['user_id'] = email_address
+    if email_address is not None:
+        flow.params['user_id'] = email_address
     flow.params['state'] = state
-    return flow.step1_get_authorize_url(REDIRECT_URI)
+    return flow.step1_get_authorize_url(redirect_url)
 
 
 def get_credentials(authorization_code, state):
