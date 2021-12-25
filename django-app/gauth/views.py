@@ -5,10 +5,11 @@ from django.http import HttpResponseRedirect, HttpResponseBadRequest
 from oauth2client.contrib import xsrfutil
 from .models import CredentialsModel
 from django.shortcuts import render
-from gmail.authorization import (get_authorization_url, exchange_code,
+from googleapi.authorization import (get_authorization_url, exchange_code,
                                  get_credentials_using_authorization_code, get_credentials_from_storage)
-from gmail.labels import show_labels
-from gmail.emails import show_emails
+from googleapi.gmail.labels import show_labels
+from googleapi.gmail.emails import show_emails
+from googleapi.gdrive.list import list_files
 
 from googleapiclient.discovery import build
 
@@ -18,7 +19,7 @@ REDIRECT_URI = 'http://127.0.0.1:8000/oauth2callback'
 
 def home(request):
     user = request.user
-    print("auth_return() user={}".format(user))
+    print("home() user={}".format(user))
 
     if not request.user.is_authenticated:
         return HttpResponseRedirect('admin')
@@ -32,6 +33,25 @@ def home(request):
         show_emails(credentials)
 
     return render(request, 'index.html', {'status': status})
+
+
+def list(request):
+    user = request.user
+    print("list() user={}".format(user))
+
+    if not request.user.is_authenticated:
+        return HttpResponseRedirect('admin')
+
+    credentials = get_credentials_from_storage(user)
+    print("home(): credentials={}".format(credentials))
+
+    status = credentials is not None
+
+    if credentials is not None:
+        list_files(credentials)
+
+    return render(request, 'index.html', {'status': status})
+
 
 
 def gmail_authenticate(request):

@@ -79,7 +79,7 @@ def get_stored_credentials(user_id):
     print("We need to fetch the refresh_token for user_id={}".format(user_id))
     credentials_file_path = CREDENTIALS_LOCATION
     if os.path.exists(credentials_file_path):
-        credential = Credentials.from_authorized_user_file(credentials_file_path, GMAIL_SCOPES)
+        credential = Credentials.from_authorized_user_file(credentials_file_path, GMAIL_SCOPES + GDRIVE_SCOPES)
     else:
         credential = None
     return credential
@@ -118,7 +118,7 @@ def exchange_code(authorization_code, redirect_uri):
     Raises:
       CodeExchangeException: an error occurred.
     """
-    flow = flow_from_clientsecrets(CLIENTSECRETS_LOCATION, ' '.join(GMAIL_SCOPES))
+    flow = flow_from_clientsecrets(CLIENTSECRETS_LOCATION, ' '.join(GMAIL_SCOPES + GDRIVE_SCOPES))
     flow.redirect_uri = redirect_uri
     try:
         credentials = flow.step2_exchange(authorization_code)
@@ -161,7 +161,7 @@ def get_authorization_url(email_address, state, redirect_url):
       Authorization URL to redirect the user to.
     """
     flow = flow_from_clientsecrets(CLIENTSECRETS_LOCATION,
-                                   ' '.join(GMAIL_SCOPES),
+                                   ' '.join(GMAIL_SCOPES + GDRIVE_SCOPES),
                                    redirect_uri=redirect_url
                                    )
     flow.params['access_type'] = 'offline'
