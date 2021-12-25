@@ -1,7 +1,0 @@
-django
-google-api-python-client
-oauth2client
-httplib2
-jsonpickle
-beautifulsoup4
-lxml
