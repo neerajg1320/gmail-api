@@ -10,6 +10,8 @@ from gmail.authorization import (get_authorization_url, exchange_code,
 from gmail.labels import show_labels
 from gmail.emails import show_emails
 
+from googleapiclient.discovery import build
+
 
 REDIRECT_URI = 'http://127.0.0.1:8000/oauth2callback'
 
