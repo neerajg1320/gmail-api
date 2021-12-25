@@ -19,7 +19,6 @@ from apiclient.discovery import build
 #     }
 #   }
 CLIENTSECRETS_LOCATION = 'credentials.json'
-REDIRECT_URI = 'https://dev.glassball.app/'
 SCOPES = [
     'https://www.googleapis.com/auth/gmail.readonly',
     'https://www.googleapis.com/auth/userinfo.email',
@@ -87,7 +86,7 @@ def store_credentials(user_id, credentials):
     raise NotImplementedError()
 
 
-def exchange_code(authorization_code):
+def exchange_code(authorization_code, redirect_uri):
     """Exchange an authorization code for OAuth 2.0 credentials.
 
     Args:
@@ -99,7 +98,7 @@ def exchange_code(authorization_code):
       CodeExchangeException: an error occurred.
     """
     flow = flow_from_clientsecrets(CLIENTSECRETS_LOCATION, ' '.join(SCOPES))
-    flow.redirect_uri = REDIRECT_URI
+    flow.redirect_uri = redirect_uri
     try:
         credentials = flow.step2_exchange(authorization_code)
         return credentials
@@ -131,7 +130,7 @@ def get_user_info(credentials):
         raise NoUserIdException()
 
 
-def get_authorization_url(email_address, state, redirect_url=REDIRECT_URI):
+def get_authorization_url(email_address, state, redirect_url):
     """Retrieve the authorization URL.
 
     Args:
@@ -140,13 +139,16 @@ def get_authorization_url(email_address, state, redirect_url=REDIRECT_URI):
     Returns:
       Authorization URL to redirect the user to.
     """
-    flow = flow_from_clientsecrets(CLIENTSECRETS_LOCATION, ' '.join(SCOPES))
+    flow = flow_from_clientsecrets(CLIENTSECRETS_LOCATION,
+                                   ' '.join(SCOPES),
+                                   redirect_uri=redirect_url
+                                   )
     flow.params['access_type'] = 'offline'
     flow.params['approval_prompt'] = 'force'
     if email_address is not None:
         flow.params['user_id'] = email_address
     flow.params['state'] = state
-    return flow.step1_get_authorize_url(redirect_url)
+    return flow.step1_get_authorize_url()
 
 
 def get_credentials(authorization_code, state):

@@ -32,9 +32,9 @@ def show_emails(credentials):
                 if d['name'] == 'From':
                     sender = d['value']
 
-            if sender is not None and subject is not None:
-                if "axisdirect" in sender:
-                    print("sender:{} subject:{}".format(sender, subject))
+            # if sender is not None and subject is not None:
+            #     if "axisdirect" in sender:
+            #         print("sender:{} subject:{}".format(sender, subject))
 
             parts = payload.get('parts')[0]
             data = parts['body']['data']
@@ -48,10 +48,9 @@ def show_emails(credentials):
 
             # Printing the subject, sender's email and message
             print("Subject: ", subject)
-            print("From: ", sender)
-            print("Message: ", body)
-            print('\n')
-
+            # print("From: ", sender)
+            # print("Message: ", body)
+            # print('\n')
 
     except HttpError as error:
         # TODO(developer) - Handle errors from gmail API.
