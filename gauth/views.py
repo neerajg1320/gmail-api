@@ -5,15 +5,12 @@ from oauth2client.contrib.django_util.storage import DjangoORMStorage
 from oauth2client.contrib import xsrfutil
 from .models import CredentialsModel
 from django.shortcuts import render
-from gmail.authorization import get_authorization_url
+from gmail.authorization import get_authorization_url, exchange_code
 from gmail.labels import show_labels
 from gmail.emails import show_emails
 
 
 REDIRECT_URI = 'http://127.0.0.1:8000/oauth2callback'
-
-
-
 
 
 def home(request):
@@ -24,30 +21,26 @@ def home(request):
 
     return render(request, 'index.html', {'status': status})
 
+
 def gmail_authenticate(request):
     email = 'neerajgupta.finance@gmail.com'
     state = 'GOOD'
 
-    authorization_request_url = get_authorization_url(email, state, redirect_url=REDIRECT_URI)
+    authorization_request_url = get_authorization_url(email, state, REDIRECT_URI)
     print('gmail_authenticate(): authorization_request_url={}'.format(authorization_request_url))
 
     return HttpResponseRedirect(authorization_request_url)
 
 
 def auth_return(request):
-    FLOW = flow_from_clientsecrets(
-        settings.GOOGLE_OAUTH2_CLIENT_SECRETS_JSON,
-        scope='https://www.googleapis.com/auth/gmail.readonly',
-        redirect_uri=REDIRECT_URI,
-        prompt='consent')
-
     state = bytes(request.GET.get('state'), 'utf8')
     authorization_code = request.GET.get('code')
     print("auth_return(): state={} authorization_code={}".format(state, authorization_code))
 
-    credential = FLOW.step2_exchange(authorization_code)
+    # credential = FLOW.step2_exchange(authorization_code)
+    credential = exchange_code(authorization_code, REDIRECT_URI)
 
-    show_labels(credential)
+    # show_labels(credential)
 
     show_emails(credential)
 
@@ -57,10 +50,13 @@ def auth_return(request):
     return HttpResponseRedirect("/")
 
 
-
-
-
 def gmail_authenticate_old(request):
+    FLOW = flow_from_clientsecrets(
+        settings.GOOGLE_OAUTH2_CLIENT_SECRETS_JSON,
+        scope='https://www.googleapis.com/auth/gmail.readonly',
+        redirect_uri=REDIRECT_URI,
+        prompt='consent')
+
     storage = DjangoORMStorage(CredentialsModel, 'id', request.user, 'credential')
     credential = storage.get()
 
