@@ -1,11 +1,11 @@
 from oauth2client.client import flow_from_clientsecrets
 from django.conf import settings
 from django.http import HttpResponseRedirect, HttpResponseBadRequest
-from oauth2client.contrib.django_util.storage import DjangoORMStorage
+# from oauth2client.contrib.django_util.storage import DjangoORMStorage
 from oauth2client.contrib import xsrfutil
 from .models import CredentialsModel
 from django.shortcuts import render
-from gmail.authorization import get_authorization_url, exchange_code
+from gmail.authorization import get_authorization_url, exchange_code, get_credentials
 from gmail.labels import show_labels
 from gmail.emails import show_emails
 
@@ -37,8 +37,9 @@ def auth_return(request):
     authorization_code = request.GET.get('code')
     print("auth_return(): state={} authorization_code={}".format(state, authorization_code))
 
-    # credential = FLOW.step2_exchange(authorization_code)
-    credential = exchange_code(authorization_code, REDIRECT_URI)
+    # Works
+    # credential = exchange_code(authorization_code, REDIRECT_URI)
+    credential = get_credentials(authorization_code, 'BAD', REDIRECT_URI)
 
     # show_labels(credential)
 

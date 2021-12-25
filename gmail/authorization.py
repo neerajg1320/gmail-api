@@ -5,7 +5,7 @@ import logging
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import FlowExchangeError
 from apiclient.discovery import build
-
+import httplib2
 
 
 # Path to client_secrets.json which should contain a JSON document such as:
@@ -25,6 +25,8 @@ SCOPES = [
     'https://www.googleapis.com/auth/userinfo.profile',
     # Add other requested scopes.
 ]
+STORAGE_STUB = True
+
 
 class GetCredentialsException(Exception):
     """Error raised when an error occurred while retrieving credentials.
@@ -65,7 +67,10 @@ def get_stored_credentials(user_id):
     #       To instantiate an OAuth2Credentials instance from a Json
     #       representation, use the oauth2client.client.Credentials.new_from_json
     #       class method.
-    raise NotImplementedError()
+    if STORAGE_STUB:
+        return None
+    else:
+        raise NotImplementedError()
 
 
 def store_credentials(user_id, credentials):
@@ -83,7 +88,11 @@ def store_credentials(user_id, credentials):
     # TODO: Implement this function to work with your database.
     #       To retrieve a Json representation of the credentials instance, call the
     #       credentials.to_json() method.
-    raise NotImplementedError()
+
+    if STORAGE_STUB:
+        pass
+    else:
+        raise NotImplementedError()
 
 
 def exchange_code(authorization_code, redirect_uri):
@@ -151,7 +160,7 @@ def get_authorization_url(email_address, state, redirect_url):
     return flow.step1_get_authorize_url()
 
 
-def get_credentials(authorization_code, state):
+def get_credentials(authorization_code, state, redirect_uri):
     """Retrieve credentials using the provided authorization code.
 
     This function exchanges the authorization code for an access token and queries
@@ -175,7 +184,7 @@ def get_credentials(authorization_code, state):
     """
     email_address = ''
     try:
-        credentials = exchange_code(authorization_code)
+        credentials = exchange_code(authorization_code, redirect_uri)
         user_info = get_user_info(credentials)
         email_address = user_info.get('email')
         user_id = user_info.get('id')
@@ -195,6 +204,7 @@ def get_credentials(authorization_code, state):
         raise error
     except NoUserIdException:
         logging.error('No user ID could be retrieved.')
+
     # No refresh token has been retrieved.
     authorization_url = get_authorization_url(email_address, state)
     raise NoRefreshTokenException(authorization_url)
