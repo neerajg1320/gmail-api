@@ -1,0 +1,5 @@
+.DS_Store
+venv3
+.idea
+__pycache__
+attachments
