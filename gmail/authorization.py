@@ -6,6 +6,8 @@ from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import FlowExchangeError
 from apiclient.discovery import build
 import httplib2
+from google.oauth2.credentials import Credentials
+import os
 
 
 # Path to client_secrets.json which should contain a JSON document such as:
@@ -18,14 +20,14 @@ import httplib2
 #       "token_uri": "https://accounts.google.com/o/oauth2/token"
 #     }
 #   }
-CLIENTSECRETS_LOCATION = 'credentials.json'
+CLIENTSECRETS_LOCATION = 'client_secret.json'
 SCOPES = [
     'https://www.googleapis.com/auth/gmail.readonly',
     'https://www.googleapis.com/auth/userinfo.email',
     'https://www.googleapis.com/auth/userinfo.profile',
     # Add other requested scopes.
 ]
-STORAGE_STUB = True
+CREDENTIALS_LOCATION = 'credentials.json'
 
 
 class GetCredentialsException(Exception):
@@ -67,10 +69,14 @@ def get_stored_credentials(user_id):
     #       To instantiate an OAuth2Credentials instance from a Json
     #       representation, use the oauth2client.client.Credentials.new_from_json
     #       class method.
-    if STORAGE_STUB:
-        return None
+
+    print("We need to fetch the refresh_token for user_id={}".format(user_id))
+    credentials_file_path = CREDENTIALS_LOCATION
+    if os.path.exists(credentials_file_path):
+        credential = Credentials.from_authorized_user_file(credentials_file_path, SCOPES)
     else:
-        raise NotImplementedError()
+        credential = None
+    return credential
 
 
 def store_credentials(user_id, credentials):
@@ -89,10 +95,10 @@ def store_credentials(user_id, credentials):
     #       To retrieve a Json representation of the credentials instance, call the
     #       credentials.to_json() method.
 
-    if STORAGE_STUB:
-        pass
-    else:
-        raise NotImplementedError()
+    credentials_file_path = CREDENTIALS_LOCATION
+    print("Storing the credentials for user_id={} at {}".format(user_id, credentials_file_path))
+    with open(credentials_file_path, "w") as f:
+        f.write(credentials.to_json())
 
 
 def exchange_code(authorization_code, redirect_uri):
@@ -160,7 +166,7 @@ def get_authorization_url(email_address, state, redirect_url):
     return flow.step1_get_authorize_url()
 
 
-def get_credentials(authorization_code, state, redirect_uri):
+def get_credentials_using_authorization_code(authorization_code, state, redirect_uri):
     """Retrieve credentials using the provided authorization code.
 
     This function exchanges the authorization code for an access token and queries
@@ -185,6 +191,10 @@ def get_credentials(authorization_code, state, redirect_uri):
     email_address = ''
     try:
         credentials = exchange_code(authorization_code, redirect_uri)
+        print("credentials:\n access_token={}\n refresh_token={}".format(
+            credentials.access_token, credentials.refresh_token)
+        )
+
         user_info = get_user_info(credentials)
         email_address = user_info.get('email')
         user_id = user_info.get('id')
@@ -208,3 +218,7 @@ def get_credentials(authorization_code, state, redirect_uri):
     # No refresh token has been retrieved.
     authorization_url = get_authorization_url(email_address, state)
     raise NoRefreshTokenException(authorization_url)
+
+
+def get_credentials_from_storage(user_id):
+    return get_stored_credentials(user_id)

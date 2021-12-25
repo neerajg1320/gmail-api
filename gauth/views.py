@@ -5,7 +5,8 @@ from django.http import HttpResponseRedirect, HttpResponseBadRequest
 from oauth2client.contrib import xsrfutil
 from .models import CredentialsModel
 from django.shortcuts import render
-from gmail.authorization import get_authorization_url, exchange_code, get_credentials
+from gmail.authorization import (get_authorization_url, exchange_code,
+                                 get_credentials_using_authorization_code, get_credentials_from_storage)
 from gmail.labels import show_labels
 from gmail.emails import show_emails
 
@@ -14,15 +15,27 @@ REDIRECT_URI = 'http://127.0.0.1:8000/oauth2callback'
 
 
 def home(request):
-    status = False
+    user = request.user
+    print("auth_return() user={}".format(user))
 
     if not request.user.is_authenticated:
         return HttpResponseRedirect('admin')
+
+    credentials = get_credentials_from_storage(user)
+    print("home(): credentials={}".format(credentials))
+
+    status = credentials is not None
+
+    if credentials is not None:
+        show_emails(credentials)
 
     return render(request, 'index.html', {'status': status})
 
 
 def gmail_authenticate(request):
+    user = request.user
+    print("gmail_authenticate() user={}".format(user))
+
     email = 'neerajgupta.finance@gmail.com'
     state = 'GOOD'
 
@@ -33,19 +46,17 @@ def gmail_authenticate(request):
 
 
 def auth_return(request):
+    user = request.user
+    print("auth_return() user={}".format(user))
+
     state = bytes(request.GET.get('state'), 'utf8')
     authorization_code = request.GET.get('code')
     print("auth_return(): state={} authorization_code={}".format(state, authorization_code))
 
     # Works
     # credential = exchange_code(authorization_code, REDIRECT_URI)
-    credential = get_credentials(authorization_code, 'BAD', REDIRECT_URI)
+    credentials = get_credentials_using_authorization_code(authorization_code, 'BAD', REDIRECT_URI)
 
-    # show_labels(credential)
-
-    show_emails(credential)
-
-    print("access_token: % s" % credential.access_token)
     print("Redirecting after successful operation")
 
     return HttpResponseRedirect("/")

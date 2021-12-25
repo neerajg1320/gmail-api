@@ -128,4 +128,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #     os.path.join(BASE_DIR, 'static'),
 # )
 
-GOOGLE_OAUTH2_CLIENT_SECRETS_JSON = 'credentials.json'
+GOOGLE_OAUTH2_CLIENT_SECRETS_JSON = 'client_secret.json'
