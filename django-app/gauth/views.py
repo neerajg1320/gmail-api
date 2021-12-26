@@ -6,12 +6,16 @@ from oauth2client.contrib import xsrfutil
 from .models import CredentialsModel
 from django.shortcuts import render
 from googleapi.authorization import (get_authorization_url, exchange_code,
-                                 get_credentials_using_authorization_code, get_credentials_from_storage)
+                                     get_credentials_using_authorization_code,
+                                     get_stored_credentials,
+                                     refresh_stored_credentials)
 from googleapi.gmail.labels import show_labels
 from googleapi.gmail.emails import show_emails
 from googleapi.gdrive.list import list_files
 
 from googleapiclient.discovery import build
+import json
+
 
 
 REDIRECT_URI = 'http://127.0.0.1:8000/oauth2callback'
@@ -24,15 +28,46 @@ def home(request):
     if not request.user.is_authenticated:
         return HttpResponseRedirect('admin')
 
-    credentials = get_credentials_from_storage(user)
-    print("home(): credentials={}".format(credentials))
+    credentials = get_stored_credentials(user)
+    if credentials is not None:
+        print("home(): access_token={}".format(credentials.access_token))
 
     status = credentials is not None
 
     if credentials is not None:
-        show_emails(credentials)
+        show_labels(credentials)
 
     return render(request, 'index.html', {'status': status})
+
+
+def credentials(request):
+    user = request.user
+    print("home() user={}".format(user))
+
+    if not request.user.is_authenticated:
+        return HttpResponseRedirect('admin')
+
+    credentials = get_stored_credentials(user)
+    if credentials:
+        # Create a dict
+        raw_json_str = credentials.to_json()
+        pretty_json = json.dumps(json.loads(raw_json_str), indent=4)
+
+    result_dict = {'api': 'credentials', 'credentials': pretty_json}
+    return render(request, 'api.html', result_dict)
+
+
+def refresh(request):
+    user = request.user
+    print("home() user={}".format(user))
+
+    if not request.user.is_authenticated:
+        return HttpResponseRedirect('admin')
+
+    status = refresh_stored_credentials(user)
+
+    result_dict = {'api': 'refresh', 'status': status}
+    return render(request, 'api.html', result_dict)
 
 
 def list(request):
@@ -42,7 +77,7 @@ def list(request):
     if not request.user.is_authenticated:
         return HttpResponseRedirect('admin')
 
-    credentials = get_credentials_from_storage(user)
+    credentials = get_stored_credentials(user)
     print("home(): credentials={}".format(credentials))
 
     status = credentials is not None
