@@ -7,6 +7,8 @@ from oauth2client.client import FlowExchangeError
 from apiclient.discovery import build
 import httplib2
 from google.oauth2.credentials import Credentials
+from oauth2client.client import OAuth2Credentials, TokenRevokeError
+
 import os
 
 
@@ -61,6 +63,66 @@ class NoUserIdException(Exception):
     """Error raised when no user ID could be retrieved."""
 
 
+def refresh_stored_credentials(user_id):
+    """Retrieved stored credentials for the provided user ID.
+
+    Args:
+      user_id: User's ID.
+    Returns:
+      Stored oauth2client.client.OAuth2Credentials if found, None otherwise.
+    Raises:
+      NotImplemented: This function has not been implemented.
+    """
+    # TODO: Implement this function to work with your database.
+    #       To instantiate an OAuth2Credentials instance from a Json
+    #       representation, use the oauth2client.client.Credentials.new_from_json
+    #       class method.
+
+    status = False
+    credentials = get_stored_credentials(user_id)
+    h = httplib2.Http()
+    # h = credentials.authorize(h)
+    print("refresh_stored_credentials(): type(credentials)={} h={}".format(type(credentials), h))
+    try:
+        credentials.refresh(h)
+        status = True
+        # store_credentials(user_id, credentials)
+    except TokenRevokeError as e:
+        print("Error revoke: {}".format(e))
+
+    return status
+
+
+def revoke_stored_credentials(user_id):
+    """Retrieved stored credentials for the provided user ID.
+
+    Args:
+      user_id: User's ID.
+    Returns:
+      Stored oauth2client.client.OAuth2Credentials if found, None otherwise.
+    Raises:
+      NotImplemented: This function has not been implemented.
+    """
+    # TODO: Implement this function to work with your database.
+    #       To instantiate an OAuth2Credentials instance from a Json
+    #       representation, use the oauth2client.client.Credentials.new_from_json
+    #       class method.
+
+    status = False
+    credentials = get_stored_credentials(user_id)
+    h = httplib2.Http()
+    # h = credentials.authorize(h)
+    print("refresh_stored_credentials(): type(credentials)={} h={}".format(type(credentials), h))
+    try:
+        credentials.refresh(h)
+        status = True
+        # store_credentials(user_id, credentials)
+    except TokenRevokeError as e:
+        print("Error revoke: {}".format(e))
+
+    return status
+
+
 def get_stored_credentials(user_id):
     """Retrieved stored credentials for the provided user ID.
 
@@ -76,13 +138,13 @@ def get_stored_credentials(user_id):
     #       representation, use the oauth2client.client.Credentials.new_from_json
     #       class method.
 
-    print("We need to fetch the refresh_token for user_id={}".format(user_id))
     credentials_file_path = CREDENTIALS_LOCATION
     if os.path.exists(credentials_file_path):
-        credential = Credentials.from_authorized_user_file(credentials_file_path, GMAIL_SCOPES + GDRIVE_SCOPES)
+        with open(credentials_file_path, "r") as f:
+            credentials = OAuth2Credentials.from_json(f.read())
     else:
-        credential = None
-    return credential
+        credentials = None
+    return credentials
 
 
 def store_credentials(user_id, credentials):
@@ -165,7 +227,8 @@ def get_authorization_url(email_address, state, redirect_url):
                                    redirect_uri=redirect_url
                                    )
     flow.params['access_type'] = 'offline'
-    flow.params['approval_prompt'] = 'force'
+    # The force value causes problems if we have Gmail and GDrive present
+    # flow.params['approval_prompt'] = 'force'
     if email_address is not None:
         flow.params['user_id'] = email_address
     flow.params['state'] = state
@@ -197,8 +260,8 @@ def get_credentials_using_authorization_code(authorization_code, state, redirect
     email_address = ''
     try:
         credentials = exchange_code(authorization_code, redirect_uri)
-        print("credentials:\n access_token={}\n refresh_token={}".format(
-            credentials.access_token, credentials.refresh_token)
+        print("credentials:\n {} access_token={}\n refresh_token={}".format(
+            type(credentials), credentials.access_token, credentials.refresh_token)
         )
 
         user_info = get_user_info(credentials)
@@ -225,6 +288,3 @@ def get_credentials_using_authorization_code(authorization_code, state, redirect
     authorization_url = get_authorization_url(email_address, state)
     raise NoRefreshTokenException(authorization_url)
 
-
-def get_credentials_from_storage(user_id):
-    return get_stored_credentials(user_id)
