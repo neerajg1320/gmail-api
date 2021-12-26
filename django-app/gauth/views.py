@@ -11,7 +11,7 @@ from googleapi.authorization import (get_authorization_url, exchange_code,
                                      refresh_stored_credentials)
 from googleapi.gmail.labels import show_labels
 from googleapi.gmail.emails import show_emails
-from googleapi.gdrive.list import list_files
+from googleapi.gdrive.list import list_files, list_folders
 
 from googleapiclient.discovery import build
 import json
@@ -83,7 +83,7 @@ def list(request):
     status = credentials is not None
 
     if credentials is not None:
-        list_files(credentials)
+        list_folders(credentials)
 
     return render(request, 'index.html', {'status': status})
 
