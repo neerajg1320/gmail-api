@@ -26,13 +26,9 @@ REDIRECT_URI = 'http://127.0.0.1:8000/oauth2callback'
 # @handle_expired_token
 # @force_refresh_token
 @refresh_token_on_expiry_deletion
+@redirect_to_admin_for_unauthenticated
 def home(request):
     user = request.user
-    print("home() user={}".format(user))
-
-    if not request.user.is_authenticated:
-        return HttpResponseRedirect('admin')
-
     credentials = get_stored_credentials(user.id)
     if credentials is not None:
         print("home(): access_token={}".format(credentials.access_token))
@@ -44,6 +40,8 @@ def home(request):
 
     return render(request, 'index.html', {'status': status, 'user': request.user})
 
+
+@refresh_token_on_expiry_deletion
 @redirect_to_admin_for_unauthenticated
 def credentials(request):
     user = request.user
@@ -59,6 +57,7 @@ def credentials(request):
     return render(request, 'api.html', result_dict)
 
 
+@refresh_token_on_expiry_deletion
 @redirect_to_admin_for_unauthenticated
 def refresh(request):
     user = request.user
@@ -68,13 +67,10 @@ def refresh(request):
     return render(request, 'api.html', result_dict)
 
 
+@refresh_token_on_expiry_deletion
+@redirect_to_admin_for_unauthenticated
 def list(request):
     user = request.user
-    print("list() user={}".format(user))
-
-    if not request.user.is_authenticated:
-        return HttpResponseRedirect('admin')
-
     credentials = get_stored_credentials(user.id)
     print("home(): credentials={}".format(credentials))
 
