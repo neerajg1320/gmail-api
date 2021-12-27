@@ -15,14 +15,15 @@ from googleapi.gdrive.list import list_files, list_folders
 
 from googleapiclient.discovery import build
 import json
-from googleapi.handler_decorators import handle_expired_token, force_refresh_token
+from googleapi.handler_decorators import handle_expired_token, force_refresh_token, refresh_token_on_expiry
 
 
 REDIRECT_URI = 'http://127.0.0.1:8000/oauth2callback'
 
 
-@handle_expired_token
+# @handle_expired_token
 # @force_refresh_token
+@refresh_token_on_expiry
 def home(request):
     user = request.user
     print("home() user={}".format(user))
