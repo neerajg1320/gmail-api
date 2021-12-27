@@ -17,7 +17,7 @@ from googleapiclient.discovery import build
 import json
 from googleapi.django_googleapi_decorators import (handle_expired_token, force_refresh_token,
                                                    refresh_token_on_expiry_deletion)
-from util.django_view_decorators import redirect_to_admin_for_unauthenticated
+from util.django_view_decorators import redirect_to_admin_for_unauthenticated, authenticated_api
 
 
 REDIRECT_URI = 'http://127.0.0.1:8000/oauth2callback'
@@ -68,7 +68,7 @@ def refresh(request):
 
 @refresh_token_on_expiry_deletion
 @redirect_to_admin_for_unauthenticated
-def list(request):
+def list_working(request):
     user = request.user
     credentials = get_stored_credentials(user.id)
     print("home(): credentials={}".format(credentials))
@@ -82,6 +82,16 @@ def list(request):
         result_dict ['response'] = json.dumps(files, indent=4)
 
     return render(request, 'api.html', result_dict)
+
+
+@refresh_token_on_expiry_deletion
+@redirect_to_admin_for_unauthenticated
+@authenticated_api
+def list(credentials=None):
+    if credentials is not None:
+        return list_folders(credentials)
+    else:
+        return {'status': 'Unauthenticated'}
 
 
 def gmail_authenticate(request):
