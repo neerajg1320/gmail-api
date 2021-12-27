@@ -34,7 +34,10 @@ GDRIVE_SCOPES = [
 
     'https://www.googleapis.com/auth/drive.metadata.readonly'
 ]
+
+
 CREDENTIALS_LOCATION = 'credentials.json'
+CREDENTIALS_REFRESH_LOCATION = 'credentials_refresh.json'
 
 
 class GetCredentialsException(Exception):
@@ -79,14 +82,14 @@ def refresh_stored_credentials(user_id):
     print("refresh_stored_credentials(): user_id={}".format(user_id))
 
     status = False
-    credentials = get_stored_credentials(user_id)
+    credentials = get_stored_credentials(user_id, refresh_token_needed=True)
     h = httplib2.Http()
     # h = credentials.authorize(h)
     print("refresh_stored_credentials(): type(credentials)={} h={}".format(type(credentials), h))
     try:
         credentials.refresh(h)
         status = True
-        # store_credentials(user_id, credentials)
+        store_credentials(user_id, credentials)
     except TokenRevokeError as e:
         print("Error revoke: {}".format(e))
 
@@ -123,7 +126,22 @@ def revoke_stored_credentials(user_id):
     return status
 
 
-def get_stored_credentials(user_id):
+def get_credentials_path(user_id, refresh_token_present=False):
+    from django.conf import settings
+
+    if refresh_token_present:
+        file_name = CREDENTIALS_REFRESH_LOCATION
+    else:
+        file_name = CREDENTIALS_LOCATION
+    storage_path = os.path.join(settings.BASE_DIR, "storage", "user_{}".format(user_id), file_name)
+    storage_folder = os.path.dirname(storage_path)
+    if not os.path.exists(storage_folder):
+        os.makedirs(storage_folder)
+    print("get_credentials_path(): storage_path={}".format(storage_path))
+    return storage_path
+
+
+def get_stored_credentials(user_id, refresh_token_needed=False):
     """Retrieved stored credentials for the provided user ID.
 
     Args:
@@ -138,12 +156,12 @@ def get_stored_credentials(user_id):
     #       representation, use the oauth2client.client.Credentials.new_from_json
     #       class method.
 
-    credentials_file_path = CREDENTIALS_LOCATION
+    credentials = None
+    credentials_file_path = get_credentials_path(user_id, refresh_token_present=refresh_token_needed)
     if os.path.exists(credentials_file_path):
         with open(credentials_file_path, "r") as f:
             credentials = OAuth2Credentials.from_json(f.read())
-    else:
-        credentials = None
+
     return credentials
 
 
@@ -163,13 +181,21 @@ def store_credentials(user_id, credentials):
     #       To retrieve a Json representation of the credentials instance, call the
     #       credentials.to_json() method.
 
-    credentials_file_path = CREDENTIALS_LOCATION
+    print("store_credentials(): refresh_token={}".format(credentials.refresh_token))
+    if credentials.refresh_token is not None:
+        credentials_file_path = get_credentials_path(user_id, refresh_token_present=True)
+        print("Storing the credentials for user_id={} at {}".format(user_id, credentials_file_path))
+        with open(credentials_file_path, "w") as f:
+            f.write(credentials.to_json())
+
+    credentials_file_path = get_credentials_path(user_id)
+    credentials.refresh_token = None
     print("Storing the credentials for user_id={} at {}".format(user_id, credentials_file_path))
     with open(credentials_file_path, "w") as f:
         f.write(credentials.to_json())
 
 
-def exchange_code(authorization_code, redirect_uri):
+def exchange_code(user_id, authorization_code, redirect_uri):
     """Exchange an authorization code for OAuth 2.0 credentials.
 
     Args:

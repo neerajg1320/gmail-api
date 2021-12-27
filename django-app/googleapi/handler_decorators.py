@@ -1,5 +1,5 @@
 from oauth2client.client import HttpAccessTokenRefreshError
-from googleapi.authorization import refresh_stored_credentials
+from googleapi.oauth2.authorization import get_stored_credentials, refresh_stored_credentials
 
 
 def handle_expired_token(func):
@@ -15,5 +15,19 @@ def handle_expired_token(func):
             # once the token is refreshed, we can retry the operation
             if status:
                 return func(*args, **kwargs)
+
+    return wrapper
+
+
+def force_refresh_token(func):
+    def wrapper(*args, **kwargs):
+
+        print("Force Refresh Invoked.")
+        try:
+            status = refresh_stored_credentials(1)
+        except Exception as e:
+            print("force_refresh_token():", e)
+
+        return func(*args, **kwargs)
 
     return wrapper

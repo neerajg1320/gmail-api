@@ -5,7 +5,7 @@ from django.http import HttpResponseRedirect, HttpResponseBadRequest
 from oauth2client.contrib import xsrfutil
 from .models import CredentialsModel
 from django.shortcuts import render
-from googleapi.authorization import (get_authorization_url, exchange_code,
+from googleapi.oauth2.authorization import (get_authorization_url, exchange_code,
                                      get_credentials_using_authorization_code,
                                      get_stored_credentials, store_credentials,
                                      refresh_stored_credentials)
@@ -15,13 +15,14 @@ from googleapi.gdrive.list import list_files, list_folders
 
 from googleapiclient.discovery import build
 import json
-from googleapi.error_handlers import handle_expired_token
+from googleapi.handler_decorators import handle_expired_token, force_refresh_token
 
 
 REDIRECT_URI = 'http://127.0.0.1:8000/oauth2callback'
 
 
-@handle_expired_token
+# @handle_expired_token
+@force_refresh_token
 def home(request):
     user = request.user
     print("home() user={}".format(user))
@@ -29,7 +30,7 @@ def home(request):
     if not request.user.is_authenticated:
         return HttpResponseRedirect('admin')
 
-    credentials = get_stored_credentials(user)
+    credentials = get_stored_credentials(user.id)
     if credentials is not None:
         print("home(): access_token={}".format(credentials.access_token))
 
@@ -48,13 +49,15 @@ def credentials(request):
     if not request.user.is_authenticated:
         return HttpResponseRedirect('admin')
 
-    credentials = get_stored_credentials(user)
+    result_dict = {'api': 'credentials'}
+
+    credentials = get_stored_credentials(user.id)
     if credentials:
         # Create a dict
         raw_json_str = credentials.to_json()
         pretty_json = json.dumps(json.loads(raw_json_str), indent=4)
+        result_dict ['credentials'] =  pretty_json
 
-    result_dict = {'api': 'credentials', 'credentials': pretty_json}
     return render(request, 'api.html', result_dict)
 
 
@@ -78,7 +81,7 @@ def list(request):
     if not request.user.is_authenticated:
         return HttpResponseRedirect('admin')
 
-    credentials = get_stored_credentials(user)
+    credentials = get_stored_credentials(user.id)
     print("home(): credentials={}".format(credentials))
 
     status = credentials is not None
@@ -112,8 +115,9 @@ def auth_return(request):
     print("auth_return(): state={} authorization_code={}".format(state, authorization_code))
 
     # Works
-    credentials = exchange_code(authorization_code, REDIRECT_URI)
-    store_credentials(user, credentials)
+    credentials = exchange_code(user.id, authorization_code, REDIRECT_URI)
+    store_credentials(user.id, credentials)
+
     # credentials = get_credentials_using_authorization_code(authorization_code, 'BAD', REDIRECT_URI)
 
     print("Redirecting after successful operation")

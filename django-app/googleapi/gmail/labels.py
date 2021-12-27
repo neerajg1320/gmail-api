@@ -1,9 +1,7 @@
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-from googleapi.error_handlers import handle_expired_token
 
 
-@handle_expired_token
 def show_labels(credentials):
     try:
         # Call the Gmail API
