@@ -77,6 +77,7 @@ def refresh_stored_credentials(user_id):
     #       To instantiate an OAuth2Credentials instance from a Json
     #       representation, use the oauth2client.client.Credentials.new_from_json
     #       class method.
+    print("refresh_stored_credentials(): user_id={}".format(user_id))
 
     status = False
     credentials = get_stored_credentials(user_id)
@@ -285,6 +286,6 @@ def get_credentials_using_authorization_code(authorization_code, state, redirect
         logging.error('No user ID could be retrieved.')
 
     # No refresh token has been retrieved.
-    authorization_url = get_authorization_url(email_address, state)
+    authorization_url = get_authorization_url(email_address, state, redirect_uri)
     raise NoRefreshTokenException(authorization_url)
 

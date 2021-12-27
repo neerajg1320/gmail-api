@@ -7,7 +7,7 @@ from .models import CredentialsModel
 from django.shortcuts import render
 from googleapi.authorization import (get_authorization_url, exchange_code,
                                      get_credentials_using_authorization_code,
-                                     get_stored_credentials,
+                                     get_stored_credentials, store_credentials,
                                      refresh_stored_credentials)
 from googleapi.gmail.labels import show_labels
 from googleapi.gmail.emails import show_emails
@@ -111,8 +111,9 @@ def auth_return(request):
     print("auth_return(): state={} authorization_code={}".format(state, authorization_code))
 
     # Works
-    # credential = exchange_code(authorization_code, REDIRECT_URI)
-    credentials = get_credentials_using_authorization_code(authorization_code, 'BAD', REDIRECT_URI)
+    credentials = exchange_code(authorization_code, REDIRECT_URI)
+    store_credentials(user, credentials)
+    # credentials = get_credentials_using_authorization_code(authorization_code, 'BAD', REDIRECT_URI)
 
     print("Redirecting after successful operation")
 
