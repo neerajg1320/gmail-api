@@ -2,14 +2,13 @@
 
 
 import logging
+import os
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import FlowExchangeError
 from apiclient.discovery import build
 import httplib2
 from google.oauth2.credentials import Credentials
 from oauth2client.client import OAuth2Credentials, TokenRevokeError
-
-import os
 
 
 # Path to client_secrets.json which should contain a JSON document such as:

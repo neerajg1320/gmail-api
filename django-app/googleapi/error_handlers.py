@@ -10,9 +10,10 @@ def handle_expired_token(func):
             # Invoke the code responsible for get a new token
             # request_new_token()
             print("The access token is expired or revoked. Refresh Invoked.")
-            refresh_stored_credentials(1)
+            status = refresh_stored_credentials(1)
 
             # once the token is refreshed, we can retry the operation
-            return func(*args, **kwargs)
+            if status:
+                return func(*args, **kwargs)
 
     return wrapper
