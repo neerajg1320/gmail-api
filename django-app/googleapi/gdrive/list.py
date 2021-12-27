@@ -30,6 +30,7 @@ def list_files(credentials):
 
 # https://developers.google.com/drive/api/v3/search-files#python
 def list_folders(credentials):
+    print("list_folder(): called")
     try:
         # Call the Gmail API
         service = build('drive', 'v3', credentials=credentials)

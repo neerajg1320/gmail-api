@@ -126,7 +126,7 @@ def revoke_stored_credentials(user_id):
     return status
 
 
-def get_credentials_path(user_id, refresh_token_present=False):
+def get_credentials_path(user_id, refresh_token_present=False, create_path = False):
     from django.conf import settings
 
     if refresh_token_present:
@@ -135,8 +135,11 @@ def get_credentials_path(user_id, refresh_token_present=False):
         file_name = CREDENTIALS_LOCATION
     storage_path = os.path.join(settings.BASE_DIR, "storage", "user_{}".format(user_id), file_name)
     storage_folder = os.path.dirname(storage_path)
-    if not os.path.exists(storage_folder):
-        os.makedirs(storage_folder)
+
+    if create_path:
+        if not os.path.exists(storage_folder):
+            os.makedirs(storage_folder)
+
     print("get_credentials_path(): storage_path={}".format(storage_path))
     return storage_path
 
@@ -183,12 +186,12 @@ def store_credentials(user_id, credentials):
 
     print("store_credentials(): refresh_token={}".format(credentials.refresh_token))
     if credentials.refresh_token is not None:
-        credentials_file_path = get_credentials_path(user_id, refresh_token_present=True)
+        credentials_file_path = get_credentials_path(user_id, refresh_token_present=True, create_path=True)
         print("Storing the credentials for user_id={} at {}".format(user_id, credentials_file_path))
         with open(credentials_file_path, "w") as f:
             f.write(credentials.to_json())
 
-    credentials_file_path = get_credentials_path(user_id)
+    credentials_file_path = get_credentials_path(user_id, create_path=True)
     credentials.refresh_token = None
     print("Storing the credentials for user_id={} at {}".format(user_id, credentials_file_path))
     with open(credentials_file_path, "w") as f:
@@ -258,6 +261,7 @@ def get_authorization_url(email_address, state, redirect_url):
     if email_address is not None:
         flow.params['user_id'] = email_address
     flow.params['state'] = state
+    flow.params['user_id'] = 2
     return flow.step1_get_authorize_url()
 
 

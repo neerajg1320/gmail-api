@@ -23,8 +23,12 @@ def force_refresh_token(func):
     def wrapper(*args, **kwargs):
 
         print("Force Refresh Invoked.")
+        if len(args) < 1:
+            raise RuntimeError("Expecting request parameter at position 0")
+
+        request = args[0]
         try:
-            status = refresh_stored_credentials(1)
+            status = refresh_stored_credentials(request.user.id)
         except Exception as e:
             print("force_refresh_token():", e)
 

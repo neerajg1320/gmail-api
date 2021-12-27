@@ -22,7 +22,7 @@ REDIRECT_URI = 'http://127.0.0.1:8000/oauth2callback'
 
 
 # @handle_expired_token
-@force_refresh_token
+# @force_refresh_token
 def home(request):
     user = request.user
     print("home() user={}".format(user))
@@ -92,13 +92,13 @@ def list(request):
     return render(request, 'index.html', {'status': status})
 
 
-
 def gmail_authenticate(request):
     user = request.user
     print("gmail_authenticate() user={}".format(user))
 
-    email = 'neerajgupta.finance@gmail.com'
-    state = 'GOOD'
+    # email = 'neerajgupta.finance@gmail.com'
+    email = None
+    state = request.user.id
 
     authorization_request_url = get_authorization_url(email, state, REDIRECT_URI)
     print('gmail_authenticate(): authorization_request_url={}'.format(authorization_request_url))
@@ -110,13 +110,15 @@ def auth_return(request):
     user = request.user
     print("auth_return() user={}".format(user))
 
-    state = bytes(request.GET.get('state'), 'utf8')
+    # state = bytes(request.GET.get('state'), 'utf8')
+    state = request.GET.get('state')
     authorization_code = request.GET.get('code')
     print("auth_return(): state={} authorization_code={}".format(state, authorization_code))
 
+    user_id = state
     # Works
-    credentials = exchange_code(user.id, authorization_code, REDIRECT_URI)
-    store_credentials(user.id, credentials)
+    credentials = exchange_code(user_id, authorization_code, REDIRECT_URI)
+    store_credentials(user_id, credentials)
 
     # credentials = get_credentials_using_authorization_code(authorization_code, 'BAD', REDIRECT_URI)
 
