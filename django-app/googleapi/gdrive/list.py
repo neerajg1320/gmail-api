@@ -43,11 +43,11 @@ def list_folders(credentials):
         ).execute()
         files = response.get('files')
 
-        nextPageToken = response.get('nextPageToken')
-        while nextPageToken:
-            response = service.files().list().execute()
-            files.extend(response.get('files'))
-            nextPageToken = response.get('nextPageToken')
+        # nextPageToken = response.get('nextPageToken')
+        # while nextPageToken:
+        #     response = service.files().list().execute()
+        #     files.extend(response.get('files'))
+        #     nextPageToken = response.get('nextPageToken')
 
         if files is not None:
             print("list_files(): files={}".format(len(files)))

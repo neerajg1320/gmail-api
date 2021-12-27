@@ -39,7 +39,7 @@ def home(request):
     if credentials is not None:
         show_labels(credentials)
 
-    return render(request, 'index.html', {'status': status})
+    return render(request, 'index.html', {'status': status, 'user': request.user})
 
 
 def credentials(request):
