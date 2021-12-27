@@ -53,6 +53,9 @@ class GetCredentialsException(Exception):
         self.authorization_url = authorization_url
 
 
+class NoCredentialsException(GetCredentialsException):
+    """Error raised when credentials file is not found."""
+
 class CodeExchangeException(GetCredentialsException):
     """Error raised when a code exchange has failed."""
 
@@ -65,7 +68,7 @@ class NoUserIdException(Exception):
     """Error raised when no user ID could be retrieved."""
 
 
-def refresh_stored_credentials(user_id):
+def refresh_stored_credentials(user_id, debug=False):
     """Retrieved stored credentials for the provided user ID.
 
     Args:
@@ -79,13 +82,15 @@ def refresh_stored_credentials(user_id):
     #       To instantiate an OAuth2Credentials instance from a Json
     #       representation, use the oauth2client.client.Credentials.new_from_json
     #       class method.
-    print("refresh_stored_credentials(): user_id={}".format(user_id))
+    if debug:
+        print("refresh_stored_credentials(): user_id={}".format(user_id))
 
     status = False
     credentials = get_stored_credentials(user_id, refresh_token_needed=True)
     h = httplib2.Http()
     # h = credentials.authorize(h)
-    print("refresh_stored_credentials(): type(credentials)={} h={}".format(type(credentials), h))
+    if debug:
+        print("refresh_stored_credentials(): type(credentials)={} h={}".format(type(credentials), h))
     try:
         credentials.refresh(h)
         status = True
@@ -126,7 +131,7 @@ def revoke_stored_credentials(user_id):
     return status
 
 
-def get_credentials_path(user_id, refresh_token_present=False, create_path = False):
+def get_credentials_path(user_id, refresh_token_present=False, create_path = False, debug=False):
     from django.conf import settings
 
     if refresh_token_present:
@@ -140,7 +145,9 @@ def get_credentials_path(user_id, refresh_token_present=False, create_path = Fal
         if not os.path.exists(storage_folder):
             os.makedirs(storage_folder)
 
-    print("get_credentials_path(): storage_path={}".format(storage_path))
+    if debug:
+        print("get_credentials_path(): storage_path={}".format(storage_path))
+
     return storage_path
 
 
@@ -164,11 +171,13 @@ def get_stored_credentials(user_id, refresh_token_needed=False):
     if os.path.exists(credentials_file_path):
         with open(credentials_file_path, "r") as f:
             credentials = OAuth2Credentials.from_json(f.read())
+    else:
+        raise NoCredentialsException('Credentials file not found')
 
     return credentials
 
 
-def store_credentials(user_id, credentials):
+def store_credentials(user_id, credentials, debug=False):
     """Store OAuth 2.0 credentials in the application's database.
 
     This function stores the provided OAuth 2.0 credentials using the user ID as
@@ -184,7 +193,9 @@ def store_credentials(user_id, credentials):
     #       To retrieve a Json representation of the credentials instance, call the
     #       credentials.to_json() method.
 
-    print("store_credentials(): refresh_token={}".format(credentials.refresh_token))
+    if debug:
+        print("store_credentials(): refresh_token={}".format(credentials.refresh_token))
+
     if credentials.refresh_token is not None:
         credentials_file_path = get_credentials_path(user_id, refresh_token_present=True, create_path=True)
         print("Storing the credentials for user_id={} at {}".format(user_id, credentials_file_path))
@@ -193,7 +204,9 @@ def store_credentials(user_id, credentials):
 
     credentials_file_path = get_credentials_path(user_id, create_path=True)
     credentials.refresh_token = None
-    print("Storing the credentials for user_id={} at {}".format(user_id, credentials_file_path))
+    if debug:
+        print("store_credentials(): Storing the credentials for user_id={} at {}".format(user_id, credentials_file_path))
+
     with open(credentials_file_path, "w") as f:
         f.write(credentials.to_json())
 

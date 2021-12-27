@@ -1,5 +1,5 @@
 from oauth2client.client import HttpAccessTokenRefreshError
-from googleapi.oauth2.authorization import get_stored_credentials, refresh_stored_credentials
+from googleapi.oauth2.authorization import get_stored_credentials, refresh_stored_credentials, NoCredentialsException
 
 
 def handle_expired_token(func):
@@ -17,15 +17,15 @@ def handle_expired_token(func):
     return wrapper
 
 
-def refresh_token_on_expiry(func):
+def refresh_token_on_expiry_deletion(func):
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except HttpAccessTokenRefreshError:
+        except (HttpAccessTokenRefreshError, NoCredentialsException) as e:
             # Invoke the code responsible for get a new token
             # request_new_token()
             request = args[0]
-            print("The access token is expired or revoked for user {}. Refresh Invoked.".format(request.user))
+            print("user {}: {}. Refresh Invoked.".format(request.user, e))
             status = refresh_stored_credentials(request.user.id)
 
             # once the token is refreshed, we can retry the operation
