@@ -9,6 +9,7 @@ from apiclient.discovery import build
 import httplib2
 from google.oauth2.credentials import Credentials
 from oauth2client.client import OAuth2Credentials, TokenRevokeError
+from oauth2client.client import HttpAccessTokenRefreshError
 
 
 # Path to client_secrets.json which should contain a JSON document such as:
@@ -100,8 +101,8 @@ def refresh_stored_credentials(user_id, debug=False):
         credentials.refresh(h)
         status = True
         store_credentials(user_id, credentials)
-    except TokenRevokeError as e:
-        print("Error revoke: {}".format(e))
+    except HttpAccessTokenRefreshError as e:
+        raise NoRefreshCredentialsException('Invalid RefreshCredentials')
 
     return status
 
