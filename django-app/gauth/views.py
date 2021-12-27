@@ -17,6 +17,7 @@ from googleapiclient.discovery import build
 import json
 from googleapi.django_googleapi_decorators import (handle_expired_token, force_refresh_token,
                                                    refresh_token_on_expiry_deletion)
+from util.django_view_decorators import redirect_to_admin_for_unauthenticated
 
 
 REDIRECT_URI = 'http://127.0.0.1:8000/oauth2callback'
@@ -43,14 +44,9 @@ def home(request):
 
     return render(request, 'index.html', {'status': status, 'user': request.user})
 
-
+@redirect_to_admin_for_unauthenticated
 def credentials(request):
     user = request.user
-    print("home() user={}".format(user))
-
-    if not request.user.is_authenticated:
-        return HttpResponseRedirect('admin')
-
     result_dict = {'api': 'credentials'}
 
     credentials = get_stored_credentials(user.id)
@@ -63,14 +59,10 @@ def credentials(request):
     return render(request, 'api.html', result_dict)
 
 
+@redirect_to_admin_for_unauthenticated
 def refresh(request):
     user = request.user
-    print("home() user={}".format(user))
-
-    if not request.user.is_authenticated:
-        return HttpResponseRedirect('admin')
-
-    status = refresh_stored_credentials(user)
+    status = refresh_stored_credentials(user.id)
 
     result_dict = {'api': 'refresh', 'status': status}
     return render(request, 'api.html', result_dict)

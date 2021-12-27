@@ -23,8 +23,9 @@ def refresh_token_on_expiry_deletion(func):
         try:
             return func(*args, **kwargs)
         except (HttpAccessTokenRefreshError, NoCredentialsException) as e:
-            # Invoke the code responsible for get a new token
-            # request_new_token()
+            if len(args) < 1:
+                raise RuntimeError("Expecting request parameter at position 0")
+
             request = args[0]
             print("user {}: {}. Refresh Invoked.".format(request.user, e))
 

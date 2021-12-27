@@ -62,6 +62,10 @@ class NoRefreshCredentialsException(GetCredentialsException):
     """Error raised when credentials file is not found."""
 
 
+class InvalidUserCredentialsException(GetCredentialsException):
+    """Error raised when credentials file is not found."""
+
+
 class CodeExchangeException(GetCredentialsException):
     """Error raised when a code exchange has failed."""
 
@@ -88,6 +92,9 @@ def refresh_stored_credentials(user_id, debug=False):
     #       To instantiate an OAuth2Credentials instance from a Json
     #       representation, use the oauth2client.client.Credentials.new_from_json
     #       class method.
+    if user_id is None:
+        raise InvalidUserCredentialsException("User {} not supported".format(user_id))
+
     if debug:
         print("refresh_stored_credentials(): user_id={}".format(user_id))
 
@@ -179,9 +186,9 @@ def get_stored_credentials(user_id, refresh_token_needed=False):
             credentials = OAuth2Credentials.from_json(f.read())
     else:
         if refresh_token_needed:
-            raise NoRefreshCredentialsException('RefreshCredentials file not found')
+            raise NoRefreshCredentialsException('RefreshCredentials file not found at {}'.format(credentials_file_path))
         else:
-            raise NoCredentialsException('Credentials file not found')
+            raise NoCredentialsException('Credentials file not found at {}'.format(credentials_file_path))
 
     return credentials
 
