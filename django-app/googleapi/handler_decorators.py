@@ -9,8 +9,24 @@ def handle_expired_token(func):
         except HttpAccessTokenRefreshError:
             # Invoke the code responsible for get a new token
             # request_new_token()
-            print("The access token is expired or revoked. Refresh Invoked.")
-            status = refresh_stored_credentials(1)
+            request = args[0]
+            print("The access token is expired or revoked for user {}.".format(request.user))
+            from django.shortcuts import render
+            return render(request, 'index.html', {'status': False, 'user': request.user})
+
+    return wrapper
+
+
+def refresh_token_on_expiry(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except HttpAccessTokenRefreshError:
+            # Invoke the code responsible for get a new token
+            # request_new_token()
+            request = args[0]
+            print("The access token is expired or revoked for user {}. Refresh Invoked.".format(request.user))
+            status = refresh_stored_credentials(request.user.id)
 
             # once the token is refreshed, we can retry the operation
             if status:

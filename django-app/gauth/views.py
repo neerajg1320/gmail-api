@@ -21,7 +21,7 @@ from googleapi.handler_decorators import handle_expired_token, force_refresh_tok
 REDIRECT_URI = 'http://127.0.0.1:8000/oauth2callback'
 
 
-# @handle_expired_token
+@handle_expired_token
 # @force_refresh_token
 def home(request):
     user = request.user
