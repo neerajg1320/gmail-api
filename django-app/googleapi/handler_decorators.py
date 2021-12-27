@@ -1,5 +1,7 @@
 from oauth2client.client import HttpAccessTokenRefreshError
-from googleapi.oauth2.authorization import get_stored_credentials, refresh_stored_credentials, NoCredentialsException
+from googleapi.oauth2.authorization import (get_stored_credentials, refresh_stored_credentials,
+                                            NoCredentialsException, NoRefreshCredentialsException)
+from django.shortcuts import render
 
 
 def handle_expired_token(func):
@@ -11,7 +13,6 @@ def handle_expired_token(func):
             # request_new_token()
             request = args[0]
             print("The access token is expired or revoked for user {}.".format(request.user))
-            from django.shortcuts import render
             return render(request, 'index.html', {'status': False, 'user': request.user})
 
     return wrapper
@@ -26,7 +27,13 @@ def refresh_token_on_expiry_deletion(func):
             # request_new_token()
             request = args[0]
             print("user {}: {}. Refresh Invoked.".format(request.user, e))
-            status = refresh_stored_credentials(request.user.id)
+
+            try:
+                status = refresh_stored_credentials(request.user.id)
+            except NoRefreshCredentialsException as e:
+                status = False
+                print(e)
+                return render(request, 'index.html', {'status': status, 'user': request.user})
 
             # once the token is refreshed, we can retry the operation
             if status:
