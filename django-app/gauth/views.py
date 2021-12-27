@@ -51,8 +51,7 @@ def credentials(request):
     if credentials:
         # Create a dict
         raw_json_str = credentials.to_json()
-        pretty_json = json.dumps(json.loads(raw_json_str), indent=4)
-        result_dict ['credentials'] =  pretty_json
+        result_dict ['response'] = json.dumps(json.loads(raw_json_str), indent=4)
 
     return render(request, 'api.html', result_dict)
 
@@ -76,19 +75,23 @@ def list(request):
 
     status = credentials is not None
 
-    if credentials is not None:
-        list_folders(credentials)
+    result_dict = {'api': 'list'}
 
-    return render(request, 'index.html', {'status': status})
+    if credentials is not None:
+        files = list_folders(credentials)
+        result_dict ['response'] = json.dumps(files, indent=4)
+
+    return render(request, 'api.html', result_dict)
 
 
 def gmail_authenticate(request):
     user = request.user
-    print("gmail_authenticate() user={}".format(user))
+    uri = request.GET.get('uri')
+    print("gmail_authenticate() user={} method={} uri={}".format(user, request.method, uri))
 
     # email = 'neerajgupta.finance@gmail.com'
     email = None
-    state = request.user.id
+    state = uri
 
     authorization_request_url = get_authorization_url(email, state, REDIRECT_URI)
     print('gmail_authenticate(): authorization_request_url={}'.format(authorization_request_url))
@@ -105,7 +108,9 @@ def auth_return(request):
     authorization_code = request.GET.get('code')
     print("auth_return(): state={} authorization_code={}".format(state, authorization_code))
 
-    user_id = state
+    user_id = request.user.id
+    uri = state
+
     # Works
     credentials = exchange_code(user_id, authorization_code, REDIRECT_URI)
     store_credentials(user_id, credentials)
@@ -113,8 +118,10 @@ def auth_return(request):
     # credentials = get_credentials_using_authorization_code(authorization_code, 'BAD', REDIRECT_URI)
 
     print("Redirecting after successful operation")
+    if uri is None:
+        uri = "/"
 
-    return HttpResponseRedirect("/")
+    return HttpResponseRedirect(uri)
 
 
 def gmail_authenticate_old(request):

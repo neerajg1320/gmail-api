@@ -12,7 +12,8 @@
 <div>
     <div>
         {% if not status %}
-        <a href="/gmailAuthenticate" onclick="gmailAuthenticate()" title="Google">Google</a>
+        <p>{{user}}: You have not authenticated for access to Google</p>
+        <a href="/gmailAuthenticate?uri={{uri}}" title="Google">Google</a>
         {% else %}
         <p>Your are verified {{user}}</p>
         {% endif %}
