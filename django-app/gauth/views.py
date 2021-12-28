@@ -10,7 +10,7 @@ from googleapi.oauth2.authorization import (get_authorization_url, exchange_code
                                      get_stored_credentials, store_credentials,
                                      refresh_stored_credentials)
 from googleapi.gmail.labels import get_labels
-from googleapi.gmail.emails import show_emails
+from googleapi.gmail.emails import get_emails
 from googleapi.gdrive.list import list_files, list_folders
 
 from googleapiclient.discovery import build
@@ -44,6 +44,12 @@ def home(request):
 def labels(request, credentials=None):
     return get_labels(credentials)
 
+
+@refresh_token_on_expiry_deletion
+@redirect_to_admin_for_unauthenticated
+@authenticated_api
+def emails(request, credentials=None):
+    return get_emails(credentials)
 
 @refresh_token_on_expiry_deletion
 @redirect_to_admin_for_unauthenticated

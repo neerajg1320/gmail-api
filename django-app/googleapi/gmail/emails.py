@@ -4,53 +4,52 @@ import base64
 from bs4 import BeautifulSoup
 
 
-def show_emails(credentials):
+def get_emails(credentials, debug=False):
     try:
         # Call the Gmail API
         service = build('gmail', 'v1', credentials=credentials)
 
         # request a list of all the messages
-        result = service.users().messages().list(userId='me').execute()
+        result = service.users().messages().list(maxResults=10, userId='me').execute()
 
         # We can also pass maxResults to get any number of emails. Like this:
         # result = service.users().messages().list(maxResults=200, userId='me').execute()
         messages = result.get('messages')
         print("Got {} messages".format(len(messages)))
 
-        for msg in messages[0:2]:
-            # print(msg)
+        emails = []
+        for msg in messages:
             txt = service.users().messages().get(userId='me', id=msg['id']).execute()
-            # print(txt)
             payload = txt['payload']
             headers = payload['headers']
 
-            sender = None
-            subject = None
+            email = {}
             for d in headers:
                 if d['name'] == 'Subject':
-                    subject = d['value']
+                    email['subjet'] = d['value']
                 if d['name'] == 'From':
-                    sender = d['value']
+                    email['sender'] = d['value']
 
-            # if sender is not None and subject is not None:
-            #     if "axisdirect" in sender:
-            #         print("sender:{} subject:{}".format(sender, subject))
+            parts = payload.get('parts', None)
+            if parts is not None:
+                part0 = parts[0]
+                if 'body' in part0 and 'data' in part0['body']:
+                    data = part0['body']['data']
+                    data = data.replace("-","+").replace("_","/")
+                    decoded_data = base64.b64decode(data)
 
-            parts = payload.get('parts')[0]
-            data = parts['body']['data']
-            data = data.replace("-","+").replace("_","/")
-            decoded_data = base64.b64decode(data)
+                    # Now, the data obtained is in lxml. So, we will parse
+                    # it with BeautifulSoup library
+                    soup = BeautifulSoup(decoded_data , "lxml")
+                    # email['body'] = soup.body()
+                else:
+                    print("part0['body']['data'] not found in payload for emails={}".format(email))
+            else:
+                print("parts not found in payload for emails={}".format(email))
 
-            # Now, the data obtained is in lxml. So, we will parse
-            # it with BeautifulSoup library
-            soup = BeautifulSoup(decoded_data , "lxml")
-            body = soup.body()
+            emails.append(email)
 
-            # Printing the subject, sender's email and message
-            print("Subject: ", subject)
-            # print("From: ", sender)
-            # print("Message: ", body)
-            # print('\n')
+        return emails
 
     except HttpError as error:
         # TODO(developer) - Handle errors from gmail API.
