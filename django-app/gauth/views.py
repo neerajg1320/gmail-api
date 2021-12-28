@@ -66,9 +66,20 @@ def refresh(request):
     return render(request, 'api.html', result_dict)
 
 
+
+
 @refresh_token_on_expiry_deletion
 @redirect_to_admin_for_unauthenticated
-def list_working(request):
+@authenticated_api
+def list(request, credentials=None):
+    return list_folders(credentials)
+
+
+# The following definition has been kept for reference.
+# The list() function looked like following before we made it an api using decorator
+@refresh_token_on_expiry_deletion
+@redirect_to_admin_for_unauthenticated
+def list_without_decorator(request):
     user = request.user
     credentials = get_stored_credentials(user.id)
     print("home(): credentials={}".format(credentials))
@@ -82,16 +93,6 @@ def list_working(request):
         result_dict ['response'] = json.dumps(files, indent=4)
 
     return render(request, 'api.html', result_dict)
-
-
-@refresh_token_on_expiry_deletion
-@redirect_to_admin_for_unauthenticated
-@authenticated_api
-def list(credentials=None):
-    if credentials is not None:
-        return list_folders(credentials)
-    else:
-        return {'status': 'Unauthenticated'}
 
 
 def gmail_authenticate(request):

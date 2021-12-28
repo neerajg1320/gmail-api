@@ -18,12 +18,8 @@ def redirect_to_admin_for_unauthenticated(func):
     return wrapper
 
 
-
 def authenticated_api(func):
-    def wrapper(*args, **kwargs):
-        if len(args) < 1:
-            raise RuntimeError("Expecting request parameter at position 0")
-        request = args[0]
+    def wrapper(request):
         user = request.user
 
         creds = get_stored_credentials(user.id)
@@ -31,9 +27,12 @@ def authenticated_api(func):
 
         result_dict = {'api': func.__name__}
         if creds is not None:
-            kwargs['credentials'] = creds
-            response = func(**kwargs)
+            kwargs = {'credentials' : creds}
+            response = func(request, **kwargs)
+            result_dict ['status'] = 'Authenticated'
             result_dict ['response'] = json.dumps(response, indent=4)
+        else:
+            result_dict ['status'] = 'Unauthenticated'
 
         return render(request, 'api.html', result_dict)
 
