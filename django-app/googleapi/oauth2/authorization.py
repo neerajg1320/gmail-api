@@ -36,9 +36,9 @@ GDRIVE_SCOPES = [
     'https://www.googleapis.com/auth/drive.metadata.readonly'
 ]
 
-
-CREDENTIALS_LOCATION = 'credentials.json'
-CREDENTIALS_REFRESH_LOCATION = 'credentials_refresh.json'
+GOOGLEAPI_CREDENTIALS_FOLDER = 'gapi'
+CREDENTIALS_FILE = 'credentials.json'
+CREDENTIALS_REFRESH_FILE = 'credentials_refresh.json'
 
 
 class GetCredentialsException(Exception):
@@ -148,10 +148,14 @@ def get_credentials_path(user_id, refresh_token_present=False, create_path = Fal
     from django.conf import settings
 
     if refresh_token_present:
-        file_name = CREDENTIALS_REFRESH_LOCATION
+        file_name = CREDENTIALS_REFRESH_FILE
     else:
-        file_name = CREDENTIALS_LOCATION
-    storage_path = os.path.join(settings.BASE_DIR, "storage", "user_{}".format(user_id), file_name)
+        file_name = CREDENTIALS_FILE
+    storage_path = os.path.join(settings.BASE_DIR,
+                                "storage",
+                                "user_{}".format(user_id),
+                                GOOGLEAPI_CREDENTIALS_FOLDER,
+                                file_name)
     storage_folder = os.path.dirname(storage_path)
 
     if create_path:
