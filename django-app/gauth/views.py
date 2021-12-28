@@ -9,7 +9,7 @@ from googleapi.oauth2.authorization import (get_authorization_url, exchange_code
                                      get_credentials_using_authorization_code,
                                      get_stored_credentials, store_credentials,
                                      refresh_stored_credentials)
-from googleapi.gmail.labels import show_labels
+from googleapi.gmail.labels import get_labels
 from googleapi.gmail.emails import show_emails
 from googleapi.gdrive.list import list_files, list_folders
 
@@ -35,37 +35,30 @@ def home(request):
 
     status = credentials is not None
 
-    if credentials is not None:
-        show_labels(credentials)
-
     return render(request, 'index.html', {'status': status, 'user': request.user})
 
 
 @refresh_token_on_expiry_deletion
 @redirect_to_admin_for_unauthenticated
-def credentials(request):
-    user = request.user
-    result_dict = {'api': 'credentials'}
-
-    credentials = get_stored_credentials(user.id)
-    if credentials:
-        # Create a dict
-        raw_json_str = credentials.to_json()
-        result_dict ['response'] = json.dumps(json.loads(raw_json_str), indent=4)
-
-    return render(request, 'api.html', result_dict)
+@authenticated_api
+def labels(request, credentials=None):
+    return get_labels(credentials)
 
 
 @refresh_token_on_expiry_deletion
 @redirect_to_admin_for_unauthenticated
-def refresh(request):
-    user = request.user
-    status = refresh_stored_credentials(user.id)
-
-    result_dict = {'api': 'refresh', 'status': status}
-    return render(request, 'api.html', result_dict)
+@authenticated_api
+def credentials(request, credentials=None):
+    return json.loads(credentials.to_json())
 
 
+# Function to force refresh the access token
+@refresh_token_on_expiry_deletion
+@redirect_to_admin_for_unauthenticated
+@authenticated_api
+def refresh(request, credentials=None):
+    status = refresh_stored_credentials(request.user.id)
+    return {'api': 'refresh', 'status': status}
 
 
 @refresh_token_on_expiry_deletion
