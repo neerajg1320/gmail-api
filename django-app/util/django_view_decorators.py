@@ -1,4 +1,4 @@
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 import json
 from googleapi.oauth2.authorization import get_stored_credentials
 from django.shortcuts import render
@@ -23,14 +23,17 @@ def authenticated_api(func):
         user = request.user
 
         creds = get_stored_credentials(user.id)
-        print("{}(): credentials={}".format(func.__name__, creds))
+        # print("{}(): credentials={}".format(func.__name__, creds))
 
         result_dict = {'api': func.__name__}
         if creds is not None:
             kwargs = {'credentials' : creds}
             response = func(request, **kwargs)
             result_dict ['status'] = 'Authenticated'
-            result_dict ['response'] = json.dumps(response, indent=4)
+            try:
+                result_dict ['response'] = json.dumps(response, indent=4)
+            except TypeError as e:
+                print("Serialization error: {}".format(e))
         else:
             result_dict ['status'] = 'Unauthenticated'
 

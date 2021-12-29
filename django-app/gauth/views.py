@@ -10,7 +10,7 @@ from googleapi.oauth2.authorization import (get_authorization_url, exchange_code
                                      get_stored_credentials, store_credentials,
                                      refresh_stored_credentials)
 from googleapi.gmail.labels import get_labels
-from googleapi.gmail.emails import get_emails
+from googleapi.gmail.emails import getEmails
 from googleapi.gdrive.list import list_files, list_folders
 
 from googleapiclient.discovery import build
@@ -18,6 +18,7 @@ import json
 from googleapi.django_googleapi_decorators import (handle_expired_token, force_refresh_token,
                                                    refresh_token_on_expiry_deletion)
 from util.django_view_decorators import redirect_to_admin_for_unauthenticated, authenticated_api
+import os
 
 
 REDIRECT_URI = 'http://127.0.0.1:8000/oauth2callback'
@@ -49,7 +50,22 @@ def labels(request, credentials=None):
 @redirect_to_admin_for_unauthenticated
 @authenticated_api
 def emails(request, credentials=None):
-    return get_emails(credentials)
+    # This part is duplicated from authorization code
+    attachment_folder = os.path.join(settings.BASE_DIR, "storage", "user_{}".format(request.user.id), "attachments")
+    if not os.path.exists(attachment_folder):
+        os.makedirs(attachment_folder)
+
+    emails = getEmails(credentials, maxResults=1, attachment_folder=attachment_folder)
+
+    items = []
+    for email in emails:
+        items.append({
+            'headers': email['headers'],
+            'body_text': str(email['body_text']),
+            'payload': email['payload'],
+        })
+    return items
+
 
 @refresh_token_on_expiry_deletion
 @redirect_to_admin_for_unauthenticated

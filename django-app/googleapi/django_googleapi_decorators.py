@@ -12,7 +12,7 @@ def refresh_token_on_expiry_deletion(func):
 
         request = args[0]
         uri = request.get_full_path()
-        print("refresh_token_on_expiry_deletion(): uri={}".format(uri))
+        # print("refresh_token_on_expiry_deletion(): uri={}".format(uri))
 
         try:
             return func(*args, **kwargs)
