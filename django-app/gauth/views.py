@@ -55,7 +55,7 @@ def emails(request, credentials=None):
     if not os.path.exists(attachment_folder):
         os.makedirs(attachment_folder)
 
-    emails = getEmails(credentials, maxResults=1, attachment_folder=attachment_folder)
+    emails = getEmails(credentials, maxResults=10, attachment_folder=attachment_folder)
 
     items = []
     for email in emails:
