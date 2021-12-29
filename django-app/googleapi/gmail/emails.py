@@ -70,7 +70,13 @@ def getEmails(credentials, maxResults=10, headers_all=True, attachment_folder=No
                                 p_headers.keys(), p_headers.values()
                             ))
 
+                            part_content_type = p_headers['Content-Type']
+
+
                             if 'data' in part_body:
+                                body_extn = part_content_type.split(";")[0].split("/")[1]
+                                body_file_name = "email{}_part{}.{}".format(count, part['partId'], body_extn)
+
                                 data = part_body['data']
 
                                 # Now, the data obtained is in lxml. So, we will parse
@@ -95,7 +101,8 @@ def getEmails(credentials, maxResults=10, headers_all=True, attachment_folder=No
                                     file_name = part['filename']
                                 else:
                                     part_content_type = p_headers['Content-Type']
-                                    extn = part_content_type.split("/")[1]
+                                    # print("part_content_type={}".format(part_content_type))
+                                    extn = part_content_type.split(";")[0].split("/")[1]
                                     file_name = "email{}_part{}.{}".format(count, part['partId'], extn)
 
                                 if 'data' in part['body']:
@@ -125,6 +132,7 @@ def getEmails(credentials, maxResults=10, headers_all=True, attachment_folder=No
                 data = data.replace("-","+").replace("_","/")
                 bytes = base64.b64decode(data)
                 body_text = bytes.decode('utf-8')
+                body_file_name = "email{}_body.{}".format(count, extn)
 
             # Process remaining payload
             payload = {}
@@ -136,6 +144,11 @@ def getEmails(credentials, maxResults=10, headers_all=True, attachment_folder=No
             email['headers'] = headers
             email['body_text'] = body_text
             email['payload'] = payload
+
+            path = os.path.join(attachment_folder, body_file_name) if attachment_folder is not None else body_file_name
+            print("    Saving body: path={}", path)
+            with open(path, 'w') as f:
+                f.write(body_text)
 
             emails.append(email)
 
